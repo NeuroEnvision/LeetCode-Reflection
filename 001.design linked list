@@ -1,0 +1,127 @@
+> Problem: [707. 设计链表](https://leetcode.cn/problems/design-linked-list/description/)
+
+[TOC]
+
+# 思路
+    数组与列表同为线性数据结构，二者的关键不同在于元素是否在物理内存中连续地存储。
+数组采用静态存储，长度固定，所有元素连续地储存在物理内存中。因此元素的物理顺序与逻辑顺序相同，按秩查询元素（call-by-rank)的静态操作可在常数时间内完成，但插入或删除元素的动态操作需遍历列表移动其他元素，在线性时间内完成。
+
+列表采用动态存储，长度不固定，元素并非连续地储存在物理内存，而是由元素间的“链接”（指针）来表明先后，物理顺序与逻辑顺序不同。按链接查询元素（call-by-link）需遍历列表，在线性时间内完成；而插入或删除元素仅需修改常数个元素的链接，因此可在常数时间内完成。
+
+根据长度是否频繁变更，动态还是静态操作居多来选择数组或列表。
+
+链表是抽象数据结构（abstract data type ADT)列表的一种实现，可进一步分为单链表，双链表，循环链表。
+
+# 解题方法
+链表实现的一个常用技巧是设置虚拟头结点。
+
+构造方法：首先定义链表节点的结构，声明成员，定义构造函数
+常见接口：
+
+    1. 查找 `get(idx)` 时间 $O(n)$
+    2. 插入
+        2.1 在链表首 `addHead(val)` 时间$O(1)$
+        2.2 在链表尾 `addTail(val)` 时间$O(n)$
+        2.3 在指定位置 `addAtIndex(idx, val)` 时间$O(n)$
+    3. 删除 `deleteAtIndex(idx)` 时间$O(n)$
+    4. 打印 `printLinkedList()` 时间$O(n)$
+
+
+# Code
+注意`delete`之后避免产生dangling pointer的语句。
+```C++ []
+
+class MyLinkedList {
+public:
+    struct ListNode{
+        int val;
+        ListNode *next;
+        ListNode(int val): val(val), next(nullptr){}
+    };
+
+    MyLinkedList() {
+        _size = 0;
+        _dummyHead = new ListNode(0);
+    }
+    
+    int get(int index) {
+        if (index < 0 || index > (_size - 1)) return -1; // check invalid index
+        ListNode *cur = _dummyHead;
+        while (index--) {
+            cur = cur->next;
+        }
+        return cur->next->val;
+    }
+    
+    void addAtHead(int val) {
+        ListNode *n_head = new ListNode(val);
+        n_head->next = _dummyHead->next;
+        _dummyHead->next = n_head;
+        _size++;
+    }
+    
+    void addAtTail(int val) {
+        ListNode *n_tail = new ListNode(val);
+        ListNode *cur = _dummyHead;
+        while (cur->next != nullptr){
+            cur = cur->next;
+        }
+        cur->next = n_tail;
+        _size++;
+    }
+    
+    void addAtIndex(int index, int val) {
+        if (index < 0 || index > (_size)) return;
+        ListNode *n_node = new ListNode(val);
+        ListNode *cur = _dummyHead;
+        while (index--){
+            cur = cur->next;
+        } 
+        n_node->next = cur->next;
+        cur->next = n_node;
+        _size++;
+    }
+    
+    void deleteAtIndex(int index) {
+        if (index < 0 || index >= _size) return;
+        ListNode *cur = _dummyHead;
+        while (index--){
+            cur = cur->next;
+        }
+        ListNode *tmp = cur->next;
+        cur->next = cur->next->next;
+        delete tmp; // release the memory pointed by tmp BUT
+        // without `tmp = nullptr;` tmp becomes a dangling pointer 
+        // if it were carelessly used later, it could point to any location 
+        // and result in bugs hard to trace down. 
+        tmp = nullptr;
+        _size--;
+    }
+
+    void printLinkedList() {
+        ListNode *cur = _dummyHead;
+        while (cur->next != nullptr){
+            cout << cur->next->val << " ";
+            cur = cur->next;
+        }
+        cout << endl;
+    }
+    
+private:
+    int _size;
+    ListNode *_dummyHead;
+};
+
+/**
+ * Your MyLinkedList object will be instantiated and called as such:
+ * MyLinkedList* obj = new MyLinkedList();
+ * int param_1 = obj->get(index);
+ * obj->addAtHead(val);
+ * obj->addAtTail(val);
+ * obj->addAtIndex(index,val);
+ * obj->deleteAtIndex(index);
+ */
+```
+# 参考资料
+- 《数据结构（C++语言版）》（第3版）邓俊辉 编著 清华大学出版社
+- 代码随想录题解
